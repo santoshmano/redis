@@ -1,14 +1,20 @@
 package main
 
 import (
+	"github.com/santoshmano/redis/config"
 	"log"
 	"net"
-	"os"
+	"strconv"
 	"time"
 )
 
 func main() {
-	ipAddr, port := os.Args[1], os.Args[2]
+
+	// Loading the configuration
+	redisConfig := config.LoadConfig()
+
+	ipAddr := redisConfig.Server.IPAddr
+	port := strconv.Itoa(redisConfig.Server.Port)
 	service := ipAddr + ":" + port
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", service)
@@ -38,11 +44,13 @@ func main() {
 }
 
 func handleClient(conn net.Conn) {
-	defer conn.Close()
 
 	daytime := time.Now().String()
-	_, err := conn.Write([]byte(daytime + "\n"))
-	if err != nil {
+
+	if _, err := conn.Write([]byte(daytime + "\n")); err != nil {
 		log.Fatalf("Write error: %s", err.Error())
+	}
+	if err := conn.Close(); err != nil {
+		log.Printf("Close error: %s", err.Error())
 	}
 }
